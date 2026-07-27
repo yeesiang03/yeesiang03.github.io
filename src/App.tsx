@@ -1248,7 +1248,7 @@ function App() {
             <h1
               ref={nameRef}
               id="about"
-              className="hero-title animate-fade-up-delay-1 text-[clamp(3.4rem,10vw,8.4rem)] font-bold leading-[0.82] tracking-[-0.07em] text-white"
+              className="hero-title animate-fade-up-delay-1 text-[clamp(3.4rem,10vw,8.4rem)] font-bold leading-[0.94] tracking-[-0.07em] text-white"
             >
               {t.hero.name}
             </h1>
@@ -1266,7 +1266,7 @@ function App() {
               <a
                 ref={ctaRef}
                 href="#projects"
-                className="primary-cta group pointer-events-auto flex items-center gap-2 px-6 py-3 text-xs uppercase tracking-widest text-black sm:px-7 sm:py-4"
+                className="primary-cta group pointer-events-auto flex items-center gap-2 px-6 py-3 text-xs uppercase tracking-widest text-white sm:px-7 sm:py-4"
               >
                 {t.hero.cta}
                 <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -1290,7 +1290,7 @@ function App() {
         {/* Section header */}
         <div className="mb-16 animate-fade-up lg:mb-20 lg:flex lg:items-end lg:justify-between">
           <div>
-            <p className="mb-4 text-[10px] uppercase tracking-[0.35em] text-emerald-200/60">
+            <p className="neon-text mb-4 w-fit text-[10px] uppercase tracking-[0.35em]">
               01 / {lang === "en" ? "Selected work" : "精选作品"}
             </p>
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
@@ -1481,7 +1481,7 @@ function App() {
         id="contact"
         className="contact-section border-t border-white/10 px-6 py-20 sm:px-10 lg:px-16 lg:py-28"
       >
-        <p className="mb-4 text-[10px] uppercase tracking-[0.35em] text-emerald-200/60">
+        <p className="neon-text mb-4 w-fit text-[10px] uppercase tracking-[0.35em]">
           02 / {lang === "en" ? "Contact" : "联系"}
         </p>
         <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">

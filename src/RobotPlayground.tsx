@@ -13,8 +13,8 @@ function angleBetween(a: { x: number; y: number }, b: { x: number; y: number }) 
 function clamp(v: number, min: number, max: number) { return Math.max(min, Math.min(max, v)) }
 function lerp(a: number, b: number, t: number) { return a + (b - a) * t }
 
-const RAINBOW_COLORS = [
-  '#ff006e', '#fb5607', '#ffbe0b', '#06ffa5', '#3a86ff', '#8338ec', '#ff4d6d', '#00f5d4',
+const SPIN_EFFECT_COLORS = [
+  '#ff4fd8', '#8a68ff', '#46d9ff', '#58f5ad', '#f5ef67', '#ff8a55',
 ]
 
 interface RobotPlaygroundProps {
@@ -195,13 +195,13 @@ export default function RobotPlayground({ textRefs = [] }: RobotPlaygroundProps)
     }
   }, [])
 
-  /* ---- Spawn rainbow burst on text collision ---------------------- */
-  const spawnRainbowBurst = (cx: number, cy: number) => {
+  /* ---- Spawn colorful spin burst on text collision ---------------- */
+  const spawnSpinBurst = (cx: number, cy: number) => {
     const s = stateRef.current
     for (let i = 0; i < 30; i++) {
       const angle = (Math.PI * 2 * i) / 30 + Math.random() * 0.2
       const speed = 2 + Math.random() * 4
-      const color = RAINBOW_COLORS[Math.floor(Math.random() * RAINBOW_COLORS.length)]
+      const color = SPIN_EFFECT_COLORS[Math.floor(Math.random() * SPIN_EFFECT_COLORS.length)]
       s.bursts.push({
         x: cx, y: cy,
         vx: Math.cos(angle) * speed,
@@ -215,9 +215,9 @@ export default function RobotPlayground({ textRefs = [] }: RobotPlaygroundProps)
         color,
       })
     }
-    // Rainbow rings
+    // Neon rings
     for (let c = 0; c < 3; c++) {
-      const color = RAINBOW_COLORS[c % RAINBOW_COLORS.length]
+      const color = SPIN_EFFECT_COLORS[c % SPIN_EFFECT_COLORS.length]
       s.bursts.push({
         x: cx, y: cy, vx: 0, vy: 0,
         life: 35 + c * 10, maxLife: 35 + c * 10,
@@ -230,7 +230,7 @@ export default function RobotPlayground({ textRefs = [] }: RobotPlaygroundProps)
     for (let i = 0; i < 8; i++) {
       const angle = Math.random() * Math.PI * 2
       const speed = 1 + Math.random() * 2
-      const color = RAINBOW_COLORS[Math.floor(Math.random() * RAINBOW_COLORS.length)]
+      const color = SPIN_EFFECT_COLORS[Math.floor(Math.random() * SPIN_EFFECT_COLORS.length)]
       s.bursts.push({
         x: cx + Math.cos(angle) * 25, y: cy + Math.sin(angle) * 25,
         vx: Math.cos(angle) * speed,
@@ -263,56 +263,63 @@ export default function RobotPlayground({ textRefs = [] }: RobotPlaygroundProps)
       const floatY = Math.sin(time * 0.0025) * 3 * scale + r.bounceY
       const ry = r.y + floatY
 
-      // Dimensions — sleeker proportions
-      const bodyW = 72 * scale
-      const bodyH = 56 * scale
-      const headR = 32 * scale
-      const wheelR = 14 * scale
+      // Compact floating companion proportions
+      const bodyW = 64 * scale
+      const bodyH = 48 * scale
+      const headR = 34 * scale
       const eyeR = 7 * scale
+      const hue = 242 + Math.sin(time * 0.0012) * 28
+      const neon = `hsl(${hue}, 100%, 70%)`
 
       ctx.save()
 
-      /* ---- Shadow ---- */
-      ctx.fillStyle = 'rgba(0,0,0,0.3)'
+      /* ---- Soft hover shadow ---- */
+      const shadow = ctx.createRadialGradient(x, ry + bodyH, 0, x, ry + bodyH, bodyW * 0.75)
+      shadow.addColorStop(0, 'rgba(115,105,255,0.22)')
+      shadow.addColorStop(0.5, 'rgba(80,220,255,0.08)')
+      shadow.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.fillStyle = shadow
       ctx.beginPath()
-      ctx.ellipse(x, ry + bodyH / 2 + wheelR + 8, bodyW * 0.5, 6, 0, 0, Math.PI * 2)
+      ctx.ellipse(x, ry + bodyH / 2 + 24 * scale, bodyW * 0.72, 13 * scale, 0, 0, Math.PI * 2)
       ctx.fill()
 
-      /* ---- Wheels — thin line style ---- */
-      ctx.strokeStyle = '#555'
-      ctx.lineWidth = 2.5 * scale
-      ctx.fillStyle = '#1a1a1a'
-      for (const wx of [x - bodyW * 0.25, x + bodyW * 0.25]) {
-        ctx.beginPath()
-        ctx.arc(wx, ry + bodyH / 2 + wheelR * 0.5, wheelR, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.stroke()
-        // Hub
-        ctx.fillStyle = '#444'
-        ctx.beginPath()
-        ctx.arc(wx, ry + bodyH / 2 + wheelR * 0.5, wheelR * 0.35, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.fillStyle = '#1a1a1a'
-      }
+      /* ---- Hover engine ---- */
+      const engineGrad = ctx.createLinearGradient(x - 18 * scale, 0, x + 18 * scale, 0)
+      engineGrad.addColorStop(0, '#46d9ff')
+      engineGrad.addColorStop(0.35, '#548dff')
+      engineGrad.addColorStop(0.7, '#806dff')
+      engineGrad.addColorStop(1, '#b45cff')
+      ctx.strokeStyle = engineGrad
+      ctx.lineWidth = 3 * scale
+      ctx.lineCap = 'round'
+      ctx.beginPath()
+      ctx.moveTo(x - 17 * scale, ry + bodyH / 2 + 7 * scale)
+      ctx.lineTo(x + 17 * scale, ry + bodyH / 2 + 7 * scale)
+      ctx.stroke()
 
-      /* ---- Body — rounded rect with subtle gradient, no border ---- */
+      /* ---- Body — dark glass capsule with a chromatic edge ---- */
       const bodyGrad = ctx.createLinearGradient(x - bodyW / 2, ry - bodyH / 2, x + bodyW / 2, ry + bodyH / 2)
-      bodyGrad.addColorStop(0, '#f5f5f5')
-      bodyGrad.addColorStop(1, '#d8d8d8')
+      bodyGrad.addColorStop(0, '#20232b')
+      bodyGrad.addColorStop(0.5, '#111319')
+      bodyGrad.addColorStop(1, '#07080c')
       ctx.fillStyle = bodyGrad
-      roundRect(ctx, x - bodyW / 2, ry - bodyH / 2, bodyW, bodyH, 12 * scale)
+      roundRect(ctx, x - bodyW / 2, ry - bodyH / 2, bodyW, bodyH, 19 * scale)
       ctx.fill()
+      ctx.strokeStyle = engineGrad
+      ctx.lineWidth = 1.4 * scale
+      roundRect(ctx, x - bodyW / 2, ry - bodyH / 2, bodyW, bodyH, 19 * scale)
+      ctx.stroke()
 
-      /* ---- Chest indicator — thin line frame with status text ---- */
-      const chestW = 36 * scale
-      const chestH = 14 * scale
+      /* ---- Chest display ---- */
+      const chestW = 38 * scale
+      const chestH = 16 * scale
       const chestX = x - chestW / 2
       const chestY = ry - chestH / 2
-      ctx.fillStyle = '#0a0a0a'
-      roundRect(ctx, chestX, chestY, chestW, chestH, 3 * scale)
+      ctx.fillStyle = 'rgba(0,0,0,0.72)'
+      roundRect(ctx, chestX, chestY, chestW, chestH, 8 * scale)
       ctx.fill()
 
-      ctx.fillStyle = r.holdingBall ? '#fff' : 'rgba(255,255,255,0.7)'
+      ctx.fillStyle = r.holdingBall ? '#64e9ff' : neon
       ctx.font = `bold ${7 * scale}px "Courier New", monospace`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
@@ -320,74 +327,68 @@ export default function RobotPlayground({ textRefs = [] }: RobotPlaygroundProps)
       ctx.fillText(statusText, x, ry + 1 * scale)
 
       // Status LED
-      ctx.fillStyle = r.holdingBall
-        ? `rgba(255,255,255,${0.8 + Math.sin(time * 0.02) * 0.2})`
-        : `rgba(200,200,200,${0.3 + Math.sin(time * 0.005) * 0.2})`
+      ctx.fillStyle = r.holdingBall ? '#64e9ff' : '#8a68ff'
       ctx.beginPath()
       ctx.arc(x + chestW / 2 - 3 * scale, chestY + 3 * scale, 1.5 * scale, 0, Math.PI * 2)
       ctx.fill()
 
-      /* ---- Neck connector ---- */
-      ctx.strokeStyle = '#888'
-      ctx.lineWidth = 3 * scale
+      /* ---- Floating neck light ---- */
+      ctx.strokeStyle = '#47d7ff'
+      ctx.lineWidth = 2 * scale
       ctx.beginPath()
       ctx.moveTo(x, ry - bodyH / 2)
       ctx.lineTo(x, ry - bodyH / 2 - 6 * scale)
       ctx.stroke()
 
-      /* ---- Head — rounded rectangle, no border ---- */
-      const headW = 60 * scale
-      const headH = 48 * scale
+      /* ---- Head — soft ceramic shell ---- */
+      const headW = 72 * scale
+      const headH = 56 * scale
       const headCY = ry - bodyH / 2 - 6 * scale - headH * 0.5
       const headX = x - headW / 2
       const headY = headCY - headH / 2
       const headGrad = ctx.createLinearGradient(headX, headY, headX, headY + headH)
-      headGrad.addColorStop(0, '#ffffff')
-      headGrad.addColorStop(1, '#e8e8e8')
+      headGrad.addColorStop(0, '#fbfcff')
+      headGrad.addColorStop(0.48, '#dfe3eb')
+      headGrad.addColorStop(1, '#9ba2b1')
       ctx.fillStyle = headGrad
-      roundRect(ctx, headX, headY, headW, headH, 12 * scale)
+      roundRect(ctx, headX, headY, headW, headH, 23 * scale)
       ctx.fill()
-
-      /* ---- Single antenna — sleek line ---- */
-      ctx.strokeStyle = '#777'
-      ctx.lineWidth = 1.5 * scale
-      ctx.lineCap = 'round'
-      const antTipX = x + Math.sin(time * 0.003) * 4 * scale
-      const antTipY = headCY - headR - 16 * scale
-      ctx.beginPath()
-      ctx.moveTo(x, headCY - headR)
-      ctx.quadraticCurveTo(x + Math.sin(time * 0.003) * 8 * scale, headCY - headR - 8 * scale, antTipX, antTipY)
+      ctx.strokeStyle = 'rgba(255,255,255,0.72)'
+      ctx.lineWidth = 1.2 * scale
+      roundRect(ctx, headX + 1 * scale, headY + 1 * scale, headW - 2 * scale, headH - 2 * scale, 22 * scale)
       ctx.stroke()
-      // Antenna tip
-      ctx.fillStyle = r.holdingBall
-        ? `rgba(255,255,255,${0.7 + Math.sin(time * 0.02) * 0.3})`
-        : '#ccc'
+
+      /* ---- Floating neon halo ---- */
+      const haloY = headY - 10 * scale
+      ctx.strokeStyle = engineGrad
+      ctx.lineWidth = 2.2 * scale
       ctx.beginPath()
-      ctx.arc(antTipX, antTipY, 3 * scale, 0, Math.PI * 2)
-      ctx.fill()
+      ctx.ellipse(x, haloY, (22 + Math.sin(time * 0.003) * 2) * scale, 5 * scale, 0, 0, Math.PI * 2)
+      ctx.stroke()
       if (r.holdingBall) {
-        // Glow when happy
-        const glowGrad = ctx.createRadialGradient(antTipX, antTipY, 0, antTipX, antTipY, 12 * scale)
-        glowGrad.addColorStop(0, 'rgba(255,255,255,0.4)')
+        const glowGrad = ctx.createRadialGradient(x, haloY, 0, x, haloY, 30 * scale)
+        glowGrad.addColorStop(0, 'rgba(126,104,255,0.25)')
         glowGrad.addColorStop(1, 'rgba(255,255,255,0)')
         ctx.fillStyle = glowGrad
         ctx.beginPath()
-        ctx.arc(antTipX, antTipY, 12 * scale, 0, Math.PI * 2)
+        ctx.arc(x, haloY, 30 * scale, 0, Math.PI * 2)
         ctx.fill()
       }
 
-      /* ---- Face screen — black rect (not round) ---- */
-      const faceW = headR * 1.5
-      const faceH = headR * 1.1
+      /* ---- Face screen — inset pill ---- */
+      const faceW = 58 * scale
+      const faceH = 40 * scale
       const faceX = x - faceW / 2
       const faceY = headCY - faceH / 2
-      ctx.fillStyle = '#0a0a0a'
-      roundRect(ctx, faceX, faceY, faceW, faceH, 3 * scale)
+      const faceGrad = ctx.createLinearGradient(faceX, faceY, faceX, faceY + faceH)
+      faceGrad.addColorStop(0, '#090a10')
+      faceGrad.addColorStop(1, '#020306')
+      ctx.fillStyle = faceGrad
+      roundRect(ctx, faceX, faceY, faceW, faceH, 16 * scale)
       ctx.fill()
-      // Thin border
-      ctx.strokeStyle = 'rgba(255,255,255,0.08)'
-      ctx.lineWidth = 0.5 * scale
-      roundRect(ctx, faceX, faceY, faceW, faceH, 3 * scale)
+      ctx.strokeStyle = 'rgba(124,248,255,0.22)'
+      ctx.lineWidth = 0.8 * scale
+      roundRect(ctx, faceX, faceY, faceW, faceH, 16 * scale)
       ctx.stroke()
 
       /* ---- Eyes ---- */
@@ -544,9 +545,9 @@ export default function RobotPlayground({ textRefs = [] }: RobotPlaygroundProps)
         y: shoulderRight.y + Math.sin(reachAngle + 0.25) * r.armReach,
       }
 
-      // Arms — tapered style with joint
-      ctx.strokeStyle = '#aaa'
-      ctx.lineWidth = 3.5 * scale
+      // Arms — slim chromatic cables
+      ctx.strokeStyle = engineGrad
+      ctx.lineWidth = 3 * scale
       ctx.lineCap = 'round'
       ctx.lineJoin = 'round'
 
@@ -560,20 +561,20 @@ export default function RobotPlayground({ textRefs = [] }: RobotPlaygroundProps)
         ctx.lineTo(elbow.x, elbow.y)
         ctx.lineTo(hd.x, hd.y)
         ctx.stroke()
-        // Joint dot
-        ctx.fillStyle = '#999'
+        // Joint light
+        ctx.fillStyle = '#47d7ff'
         ctx.beginPath()
-        ctx.arc(elbow.x, elbow.y, 2 * scale, 0, Math.PI * 2)
+        ctx.arc(elbow.x, elbow.y, 2.4 * scale, 0, Math.PI * 2)
         ctx.fill()
       }
 
-      /* ---- Hands — minimalist circles ---- */
+      /* ---- Hands — small luminous pods ---- */
       for (const hd of [leftHand, rightHand]) {
-        ctx.fillStyle = '#e8e8e8'
-        ctx.strokeStyle = 'rgba(0,0,0,0.1)'
-        ctx.lineWidth = 1 * scale
+        ctx.fillStyle = '#11131a'
+        ctx.strokeStyle = neon
+        ctx.lineWidth = 1.4 * scale
         ctx.beginPath()
-        ctx.arc(hd.x, hd.y, 4.5 * scale, 0, Math.PI * 2)
+        ctx.arc(hd.x, hd.y, 5 * scale, 0, Math.PI * 2)
         ctx.fill()
         ctx.stroke()
       }
@@ -598,6 +599,7 @@ export default function RobotPlayground({ textRefs = [] }: RobotPlaygroundProps)
     const drawBall = () => {
       const { x, y, r } = s.ball
       const sq = s.ball.squash
+      const isSpinning = Math.abs(s.ball.rotSpeed) > 0.01
       ctx.save()
 
       // Trail
@@ -610,9 +612,10 @@ export default function RobotPlayground({ textRefs = [] }: RobotPlaygroundProps)
         ctx.fill()
       }
 
-      // Glow
+      // The ball stays white; only the spinning aura becomes colorful.
       const glow = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 3)
-      glow.addColorStop(0, 'rgba(255,255,255,0.2)')
+      glow.addColorStop(0, isSpinning ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.2)')
+      glow.addColorStop(0.45, isSpinning ? 'rgba(138,104,255,0.14)' : 'rgba(255,255,255,0.06)')
       glow.addColorStop(1, 'rgba(255,255,255,0)')
       ctx.fillStyle = glow
       ctx.beginPath()
@@ -625,21 +628,43 @@ export default function RobotPlayground({ textRefs = [] }: RobotPlaygroundProps)
       ctx.scale(1 + sq, 1 - sq)
       ctx.translate(-x, -y)
 
-      const ballGrad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r)
+      const ballGrad = ctx.createRadialGradient(x - r * 0.35, y - r * 0.35, r * 0.08, x, y, r)
       ballGrad.addColorStop(0, '#ffffff')
-      ballGrad.addColorStop(1, '#e0e0e0')
+      ballGrad.addColorStop(0.72, '#f2f4f8')
+      ballGrad.addColorStop(1, '#cfd4df')
       ctx.fillStyle = ballGrad
       ctx.beginPath()
       ctx.arc(x, y, r, 0, Math.PI * 2)
       ctx.fill()
-      ctx.strokeStyle = 'rgba(0,0,0,0.12)'
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)'
       ctx.lineWidth = 1
       ctx.beginPath()
       ctx.arc(x, y, r, 0, Math.PI * 2)
       ctx.stroke()
 
-      // Rotation marker — a small arc/line so spin is visible
-      ctx.strokeStyle = 'rgba(0,0,0,0.18)'
+      // Rainbow rotation effect drawn over the white ball.
+      if (isSpinning) {
+        const spinGrad = ctx.createConicGradient(0, x, y)
+        spinGrad.addColorStop(0, '#ff4fd8')
+        spinGrad.addColorStop(0.17, '#8a68ff')
+        spinGrad.addColorStop(0.34, '#46d9ff')
+        spinGrad.addColorStop(0.51, '#58f5ad')
+        spinGrad.addColorStop(0.68, '#f5ef67')
+        spinGrad.addColorStop(0.84, '#ff8a55')
+        spinGrad.addColorStop(1, '#ff4fd8')
+        ctx.strokeStyle = spinGrad
+        ctx.lineWidth = 2.2
+        ctx.lineCap = 'round'
+        ctx.beginPath()
+        ctx.arc(x, y, r * 0.72, -0.2, 1.35)
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.arc(x, y, r * 0.72, Math.PI - 0.2, Math.PI + 1.15)
+        ctx.stroke()
+      }
+
+      // Subtle rotation marker
+      ctx.strokeStyle = isSpinning ? 'rgba(0,0,0,0.14)' : 'rgba(0,0,0,0.26)'
       ctx.lineWidth = 1.5
       ctx.lineCap = 'round'
       ctx.beginPath()
@@ -745,7 +770,7 @@ export default function RobotPlayground({ textRefs = [] }: RobotPlaygroundProps)
           if (Math.abs(s.ball.vy) > 0.5) {
             s.ball.vy *= -0.72
             s.ball.squash = Math.min(Math.abs(s.ball.vy) * 0.04, 0.5)
-            spawnRainbowBurst(s.ball.x, floorY)
+            spawnSpinBurst(s.ball.x, floorY)
           } else {
             s.ball.vy = 0
           }
@@ -755,20 +780,20 @@ export default function RobotPlayground({ textRefs = [] }: RobotPlaygroundProps)
         if (s.ball.y < ceilY) {
           s.ball.y = ceilY
           s.ball.vy *= -0.6
-          spawnRainbowBurst(s.ball.x, ceilY)
+          spawnSpinBurst(s.ball.x, ceilY)
         }
         // Wall bounce
         if (s.ball.x < leftX) {
           s.ball.x = leftX
           s.ball.vx *= -0.7
           s.ball.squash = Math.min(Math.abs(s.ball.vx) * 0.04, 0.4)
-          spawnRainbowBurst(leftX, s.ball.y)
+          spawnSpinBurst(leftX, s.ball.y)
         }
         if (s.ball.x > rightX) {
           s.ball.x = rightX
           s.ball.vx *= -0.7
           s.ball.squash = Math.min(Math.abs(s.ball.vx) * 0.04, 0.4)
-          spawnRainbowBurst(rightX, s.ball.y)
+          spawnSpinBurst(rightX, s.ball.y)
         }
 
         // Text rect collision — rotate and slowly fall through (no bounce)
@@ -788,7 +813,7 @@ export default function RobotPlayground({ textRefs = [] }: RobotPlaygroundProps)
             s.ball.vx *= 0.82
             s.ball.squash = 0.2
             // Rainbow burst at contact point
-            spawnRainbowBurst(closestX, closestY)
+            spawnSpinBurst(closestX, closestY)
             break
           }
         }
@@ -818,7 +843,7 @@ export default function RobotPlayground({ textRefs = [] }: RobotPlaygroundProps)
         r.holdTimer = 0
         r.catchFlash = 20
         r.bounceVel = -4
-        spawnRainbowBurst(r.x, r.y - 20)
+        spawnSpinBurst(r.x, r.y - 20)
       }
 
       if (r.holdingBall) {
@@ -836,7 +861,7 @@ export default function RobotPlayground({ textRefs = [] }: RobotPlaygroundProps)
         }
         // Periodic mini-bursts while holding
         if (r.holdTimer % 40 === 0 && r.holdTimer < 120) {
-          spawnRainbowBurst(r.x + (Math.random() - 0.5) * 30, r.y - 15 + (Math.random() - 0.5) * 20)
+          spawnSpinBurst(r.x + (Math.random() - 0.5) * 30, r.y - 15 + (Math.random() - 0.5) * 20)
         }
         // Auto-release after 2 seconds
         if (r.holdTimer > 120) {
